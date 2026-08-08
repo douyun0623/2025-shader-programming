@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "Renderer.h"
 
 Renderer::Renderer(int windowSizeX, int windowSizeY)
@@ -103,13 +103,21 @@ void Renderer::CompileAllShaderPrograms()
 
 void Renderer::DeleteAllShaderPrograms()
 {
-	glDeleteShader(m_SolidRectShader);
-	glDeleteShader(m_TestShader);
-	glDeleteShader(m_ParticleShader);
-	glDeleteShader(m_GridMeshShader);
-	glDeleteShader(m_FullScreenShader);
-	glDeleteShader(m_FSShader);
-	glDeleteShader(m_TexShader);
+	glDeleteProgram(m_SolidRectShader);
+	glDeleteProgram(m_TestShader);
+	glDeleteProgram(m_ParticleShader);
+	glDeleteProgram(m_GridMeshShader);
+	glDeleteProgram(m_FullScreenShader);
+	glDeleteProgram(m_FSShader);
+	glDeleteProgram(m_TexShader);
+
+	m_SolidRectShader = 0;
+	m_TestShader = 0;
+	m_ParticleShader = 0;
+	m_GridMeshShader = 0;
+	m_FullScreenShader = 0;
+	m_FSShader = 0;
+	m_TexShader = 0;
 }
 
 bool Renderer::IsInitialized()
@@ -323,7 +331,7 @@ void Renderer::CreateGridMesh(int x, int y)
 
 void Renderer::AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum ShaderType)
 {
-	//½¦ÀÌ´õ ¿ÀºêÁ§Æ® »ı¼º
+	//ì‰ì´ë” ì˜¤ë¸Œì íŠ¸ ìƒì„±
 	GLuint ShaderObj = glCreateShader(ShaderType);
 
 	if (ShaderObj == 0) {
@@ -341,26 +349,27 @@ void Renderer::AddShader(GLuint ShaderProgram, const char* pShaderText, GLenum S
 	GLint len = (GLint)slen;
 
 	Lengths[0] = len;
-	//½¦ÀÌ´õ ÄÚµå¸¦ ½¦ÀÌ´õ ¿ÀºêÁ§Æ®¿¡ ÇÒ´ç
+	//ì‰ì´ë” ì½”ë“œë¥¼ ì‰ì´ë” ì˜¤ë¸Œì íŠ¸ì— í• ë‹¹
 	glShaderSource(ShaderObj, 1, p, Lengths);
 
-	//ÇÒ´çµÈ ½¦ÀÌ´õ ÄÚµå¸¦ ÄÄÆÄÀÏ
+	//í• ë‹¹ëœ ì‰ì´ë” ì½”ë“œë¥¼ ì»´íŒŒì¼
 	glCompileShader(ShaderObj);
 
 	GLint success;
-	// ShaderObj °¡ ¼º°øÀûÀ¸·Î ÄÄÆÄÀÏ µÇ¾ú´ÂÁö È®ÀÎ
+	// ShaderObj ê°€ ì„±ê³µì ìœ¼ë¡œ ì»´íŒŒì¼ ë˜ì—ˆëŠ”ì§€ í™•ì¸
 	glGetShaderiv(ShaderObj, GL_COMPILE_STATUS, &success);
 	if (!success) {
 		GLchar InfoLog[1024];
 
-		//OpenGL ÀÇ shader log µ¥ÀÌÅÍ¸¦ °¡Á®¿È
+		//OpenGL ì˜ shader log ë°ì´í„°ë¥¼ ê°€ì ¸ì˜´
 		glGetShaderInfoLog(ShaderObj, 1024, NULL, InfoLog);
 		fprintf(stderr, "Error compiling shader type %d: '%s'\n", ShaderType, InfoLog);
 		printf("%s \n", pShaderText);
 	}
 
-	// ShaderProgram ¿¡ attach!!
+	// ShaderProgram ì— attach!!
 	glAttachShader(ShaderProgram, ShaderObj);
+	glDeleteShader(ShaderObj);
 }
 
 bool Renderer::ReadFile(char* filename, std::string *target)
@@ -382,43 +391,43 @@ bool Renderer::ReadFile(char* filename, std::string *target)
 
 GLuint Renderer::CompileShaders(char* filenameVS, char* filenameFS)
 {
-	GLuint ShaderProgram = glCreateProgram(); //ºó ½¦ÀÌ´õ ÇÁ·Î±×·¥ »ı¼º
+	GLuint ShaderProgram = glCreateProgram(); //ë¹ˆ ì‰ì´ë” í”„ë¡œê·¸ë¨ ìƒì„±
 
-	if (ShaderProgram == 0) { //½¦ÀÌ´õ ÇÁ·Î±×·¥ÀÌ ¸¸µé¾îÁ³´ÂÁö È®ÀÎ
+	if (ShaderProgram == 0) { //ì‰ì´ë” í”„ë¡œê·¸ë¨ì´ ë§Œë“¤ì–´ì¡ŒëŠ”ì§€ í™•ì¸
 		fprintf(stderr, "Error creating shader program\n");
 	}
 
 	std::string vs, fs;
 
-	//shader.vs °¡ vs ¾ÈÀ¸·Î ·ÎµùµÊ
+	//shader.vs ê°€ vs ì•ˆìœ¼ë¡œ ë¡œë”©ë¨
 	if (!ReadFile(filenameVS, &vs)) {
 		printf("Error compiling vertex shader\n");
 		return -1;
 	};
 
-	//shader.fs °¡ fs ¾ÈÀ¸·Î ·ÎµùµÊ
+	//shader.fs ê°€ fs ì•ˆìœ¼ë¡œ ë¡œë”©ë¨
 	if (!ReadFile(filenameFS, &fs)) {
 		printf("Error compiling fragment shader\n");
 		return -1;
 	};
 
-	// ShaderProgram ¿¡ vs.c_str() ¹öÅØ½º ½¦ÀÌ´õ¸¦ ÄÄÆÄÀÏÇÑ °á°ú¸¦ attachÇÔ
+	// ShaderProgram ì— vs.c_str() ë²„í…ìŠ¤ ì‰ì´ë”ë¥¼ ì»´íŒŒì¼í•œ ê²°ê³¼ë¥¼ attachí•¨
 	AddShader(ShaderProgram, vs.c_str(), GL_VERTEX_SHADER);
 
-	// ShaderProgram ¿¡ fs.c_str() ÇÁ·¹±×¸ÕÆ® ½¦ÀÌ´õ¸¦ ÄÄÆÄÀÏÇÑ °á°ú¸¦ attachÇÔ
+	// ShaderProgram ì— fs.c_str() í”„ë ˆê·¸ë¨¼íŠ¸ ì‰ì´ë”ë¥¼ ì»´íŒŒì¼í•œ ê²°ê³¼ë¥¼ attachí•¨
 	AddShader(ShaderProgram, fs.c_str(), GL_FRAGMENT_SHADER);
 
 	GLint Success = 0;
 	GLchar ErrorLog[1024] = { 0 };
 
-	//Attach ¿Ï·áµÈ shaderProgram À» ¸µÅ·ÇÔ
+	//Attach ì™„ë£Œëœ shaderProgram ì„ ë§í‚¹í•¨
 	glLinkProgram(ShaderProgram);
 
-	//¸µÅ©°¡ ¼º°øÇß´ÂÁö È®ÀÎ
+	//ë§í¬ê°€ ì„±ê³µí–ˆëŠ”ì§€ í™•ì¸
 	glGetProgramiv(ShaderProgram, GL_LINK_STATUS, &Success);
 
 	if (Success == 0) {
-		// shader program ·Î±×¸¦ ¹Ş¾Æ¿È
+		// shader program ë¡œê·¸ë¥¼ ë°›ì•„ì˜´
 		glGetProgramInfoLog(ShaderProgram, sizeof(ErrorLog), NULL, ErrorLog);
 		std::cout << filenameVS << ", " << filenameFS << " Error linking shader program\n" << ErrorLog;
 		return -1;
@@ -598,7 +607,7 @@ void Renderer::DrawFS()
 void Renderer::DrawTexture(float x, float y, float sx, float sy, GLuint TexID, GLuint TexID1,
 	GLuint method)
 {
-	// sx, sy --- ºñÀ²·Î ¹Ş³Ä, Àı´ë Å©±â·Î ¹Ş³Ä... ¼±ÅÃÀÓ ratio ·Î ¹Ş´Â°É·Î ÇÏÀÚ
+	// sx, sy --- ë¹„ìœ¨ë¡œ ë°›ëƒ, ì ˆëŒ€ í¬ê¸°ë¡œ ë°›ëƒ... ì„ íƒì„ ratio ë¡œ ë°›ëŠ”ê±¸ë¡œ í•˜ì
 
 	int shader = m_TexShader;
 
@@ -668,7 +677,7 @@ void Renderer::DrawFBOs()
 
 	// RestoreFBO
 	glViewport(0, 0, 512, 512);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0); //ÃÊ±âÈ­ ÄÚµå
+	glBindFramebuffer(GL_FRAMEBUFFER, 0); //ì´ˆê¸°í™” ì½”ë“œ
 }
 
 void Renderer::DrawBloomParicle()
@@ -693,7 +702,7 @@ void Renderer::DrawBloomParicle()
 
 	// RestoreFBO
 	glViewport(0, 0, 512, 512);
-	glBindFramebuffer(GL_FRAMEBUFFER, 0); //ÃÊ±âÈ­ ÄÚµå
+	glBindFramebuffer(GL_FRAMEBUFFER, 0); //ì´ˆê¸°í™” ì½”ë“œ
 
 	// 3. Normal Texture + Bloom Texture 
 	DrawTexture(0, 0, 1, 1, m_HDRRT0_0, m_PingpongTexture[0], 3);
@@ -1027,7 +1036,7 @@ void Renderer::CreateFBOs()
 	glBindRenderbuffer(GL_RENDERBUFFER, depthBuffer);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 512, 512);
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
-	// ·£´õ ¹öÆÛ¶û ´ğ½º ¹öÆÛÀÇ Â÷ÀÌ?
+	// ëœë” ë²„í¼ë‘ ëŒ‘ìŠ¤ ë²„í¼ì˜ ì°¨ì´?
 
 	// Gen FBO
 	glGenFramebuffers(1, &m_FBO0);
@@ -1035,7 +1044,7 @@ void Renderer::CreateFBOs()
 	// Attach to FBO 
 	glBindFramebuffer(GL_FRAMEBUFFER, m_FBO0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, 
-		GL_TEXTURE_2D, m_RT0_0, 0);	// GL_COLOR_ATTACHMENT0 0 => location 0¿Í ¿¬°ü 
+		GL_TEXTURE_2D, m_RT0_0, 0);	// GL_COLOR_ATTACHMENT0 0 => location 0ì™€ ì—°ê´€
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,
 		GL_TEXTURE_2D, m_RT0_1, 0);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
@@ -1075,7 +1084,7 @@ void Renderer::CreateFBOs()
 	glBindRenderbuffer(GL_RENDERBUFFER, depthBuffer);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 512, 512);
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
-	// ·£´õ ¹öÆÛ¶û ´ğ½º ¹öÆÛÀÇ Â÷ÀÌ?
+	// ëœë” ë²„í¼ë‘ ëŒ‘ìŠ¤ ë²„í¼ì˜ ì°¨ì´?
 
 	// Gen FBO
 	glGenFramebuffers(1, &m_FBO1);
@@ -1124,7 +1133,7 @@ void Renderer::CreateFBOs()
 	glBindRenderbuffer(GL_RENDERBUFFER, depthBuffer);
 	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, 512, 512);
 	glBindRenderbuffer(GL_RENDERBUFFER, 0);
-	// ·£´õ ¹öÆÛ¶û ´ğ½º ¹öÆÛÀÇ Â÷ÀÌ?
+	// ëœë” ë²„í¼ë‘ ëŒ‘ìŠ¤ ë²„í¼ì˜ ì°¨ì´?
 
 	// Gen FBO
 	glGenFramebuffers(1, &m_HDRFBO0);
@@ -1132,7 +1141,7 @@ void Renderer::CreateFBOs()
 	// Attach to FBO 
 	glBindFramebuffer(GL_FRAMEBUFFER, m_HDRFBO0);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0,
-		GL_TEXTURE_2D, m_HDRRT0_0, 0);	// GL_COLOR_ATTACHMENT0 0 => location 0¿Í ¿¬°ü 
+		GL_TEXTURE_2D, m_HDRRT0_0, 0);	// GL_COLOR_ATTACHMENT0 0 => location 0ì™€ ì—°ê´€
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1,
 		GL_TEXTURE_2D, m_HDRRT0_1, 0);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT,
@@ -1170,4 +1179,5 @@ void Renderer::CreateFBOs()
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 }
+
 
