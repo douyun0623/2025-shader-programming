@@ -85,7 +85,7 @@ Set-Location .\SimpleGame
 
 ## 개선 방향
 
-512×512로 고정된 FBO를 창 크기에 맞추고, 프레임 의존 시간 갱신과 shader reload 시 이전 program 해제(`glDeleteProgram`)를 보완할 예정입니다.
+`glAttachShader` 직후 shader object를 `glDeleteShader`로 삭제 표시하고, reload 시 이전 program은 `glDeleteProgram` 호출 후 핸들을 0으로 초기화합니다. 향후 512×512로 고정된 FBO를 창 크기에 맞추고, 프레임 의존 시간 갱신을 보완할 예정입니다.
 
 ## 외부 코드와 라이브러리
 
